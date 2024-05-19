@@ -1,0 +1,43 @@
+# Define the source folder where subfolders are located
+$sourceFolder = "C:\Path\To\Your\SourceFolder"
+
+# Define the destination folder where video files will be copied
+$destinationFolder = "C:\Path\To\Your\DestinationFolder"
+
+# Create the destination folder if it doesn't exist
+if (-Not (Test-Path -Path $destinationFolder)) {
+    New-Item -ItemType Directory -Path $destinationFolder
+}
+
+# Define an array of video file extensions to look for
+$videoExtensions = @('*.mp4', '*.avi', '*.mkv', '*.mov', '*.wmv', '*.flv')
+
+# Get all subdirectories in the source folder
+$subdirectories = Get-ChildItem -Path $sourceFolder -Directory -Recurse
+
+foreach ($subdir in $subdirectories) {
+    foreach ($extension in $videoExtensions) {
+        # Get all video files in the current subdirectory
+        $videoFiles = Get-ChildItem -Path $subdir.FullName -Filter $extension -File
+
+        foreach ($videoFile in $videoFiles) {
+            try {
+                # Move the video file to the destination folder
+                Move-Item -Path $videoFile.FullName -Destination $destinationFolder -Force
+
+                # Print a message when the file is successfully moved
+                Write-Output "Moved: $($videoFile.FullName) to $destinationFolder"
+            } catch {
+                Write-Error "Failed to move: $($videoFile.FullName) - $_"
+            }
+        }
+    }
+
+    # Remove the subdirectory if it's empty
+    if (-Not (Get-ChildItem -Path $subdir.FullName)) {
+        Remove-Item -Path $subdir.FullName -Force -Recurse
+        Write-Output "Removed empty folder: $($subdir.FullName)"
+    }
+}
+
+Write-Output "Video files moved and empty subfolders removed."
